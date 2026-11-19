@@ -1,4 +1,4 @@
-import { applyAnswer, selectQuestion } from "./web-engine.mjs";
+import { applyAnswer, selectQuestion } from "./web-engine.mjs?v=3";
 
 const ui = Object.fromEntries(
   ["phase", "remaining", "prompt", "note", "choices", "undo", "reset", "start"]
@@ -96,7 +96,7 @@ ui.reset.addEventListener("click", start);
 ui.start.addEventListener("click", start);
 
 try {
-  const response = await fetch("./data/pokemon.json");
+  const response = await fetch("./data/pokemon.json?v=3");
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   pokemon = await response.json();
   ui.phase.textContent = `全国図鑑 ${pokemon.length.toLocaleString("ja")}種`;
