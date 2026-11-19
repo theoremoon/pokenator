@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ポケナター</title>
-  <link rel="stylesheet" href="web.css?v=5">
-  <script type="module" src="web.mjs?v=5"></script>
+  <link rel="stylesheet" href="web.css?v=6">
+  <script type="module" src="web.mjs?v=6"></script>
 </head>
 <body>
   <main class="shell">
@@ -25,6 +25,10 @@
         <button type="button" id="undo" class="quiet" hidden>１問戻る</button>
         <button type="button" id="report" class="quiet" hidden>結果を報告</button>
       </div>
+      <section id="result-history" aria-labelledby="history-title" hidden>
+        <h3 id="history-title">質問と回答の履歴</h3>
+        <ol id="history-list"></ol>
+      </section>
     </section>
   </main>
   <dialog id="report-dialog" aria-labelledby="report-title">

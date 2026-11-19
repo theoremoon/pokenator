@@ -1,7 +1,8 @@
 import { applyAnswer, selectQuestion } from "./web-engine.mjs?v=4";
 
 const ui = Object.fromEntries(
-  ["phase", "remaining", "prompt", "note", "choices", "undo", "reset", "start", "report"]
+  ["phase", "remaining", "prompt", "note", "choices", "undo", "reset", "start", "report",
+    "result-history", "history-list"]
     .map(id => [id, document.getElementById(id)])
 );
 const answers = [
@@ -21,16 +22,19 @@ const reportBody = document.getElementById("report-body");
 const reportStatus = document.getElementById("report-status");
 let reportResult;
 
-function updateReport() {
-  const steps = history.map(step => step.question
+function historyLines() {
+  return history.map(step => step.question
     ? `${step.question.prompt} → ${answers.find(([, value]) => value === step.answer)[0]}`
     : `${step.rejected} ですか？ → ちがう`);
+}
+
+function updateReport() {
   reportBody.value = [
     `思い浮かべていたポケモン：${reportExpected.value.trim() || "（未記入）"}`,
     `表示された結果：${reportResult}`,
     "",
     "回答履歴",
-    ...steps.map((step, index) => `${index + 1}. ${step}`),
+    ...historyLines().map((step, index) => `${index + 1}. ${step}`),
   ].join("\n");
   reportStatus.hidden = true;
 }
@@ -67,7 +71,7 @@ function button(label, handler, primary = false) {
   ui.choices.append(element);
 }
 
-function screen(phase, prompt, note = "") {
+function screen(phase, prompt, note = "", confirmation = "") {
   ui.phase.textContent = phase;
   ui.remaining.textContent = candidates ? `候補 ${candidates.length.toLocaleString("ja")}種` : "";
   ui.prompt.textContent = prompt;
@@ -77,6 +81,17 @@ function screen(phase, prompt, note = "") {
   ui.undo.hidden = history.length === 0;
   ui.reset.hidden = !candidates;
   ui.report.hidden = true;
+  ui["result-history"].hidden = phase !== "結果" || (!history.length && !confirmation);
+  ui["history-list"].replaceChildren();
+  if (!ui["result-history"].hidden) {
+    const lines = historyLines();
+    if (confirmation) lines.push(confirmation);
+    for (const line of lines) {
+      const item = document.createElement("li");
+      item.textContent = line;
+      ui["history-list"].append(item);
+    }
+  }
   ui.prompt.focus();
 }
 
@@ -92,7 +107,7 @@ function render() {
     screen("予想", `${name} ですか？`);
     setReport(name);
     button("正解！", () => {
-      screen("結果", `${questionCount}問で当たりました！`, name);
+      screen("結果", `${questionCount}問で当たりました！`, name, `${name} ですか？ → 正解！`);
       button("もう一度遊ぶ", start, true);
     }, true);
     button("ちがう", () => {

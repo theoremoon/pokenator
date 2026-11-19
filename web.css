@@ -90,6 +90,17 @@ button.primary:hover:not(:disabled) { background: #efffb8; }
 .quiet { color: var(--muted); background: transparent; border-color: transparent; }
 .controls { display: flex; justify-content: space-between; gap: .5rem; margin-top: .9rem; }
 #report { margin-left: auto; }
+#result-history {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+#history-list {
+  padding-inline-start: 1.6rem;
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+#history-list li + li { margin-top: .4rem; }
 #report-dialog {
   width: min(100% - 2rem, 38rem);
   padding: clamp(1rem, 4vw, 2rem);
