@@ -15,7 +15,6 @@ let pokemon;
 let candidates;
 let current;
 const history = [];
-const excluded = new Set();
 
 function button(label, handler, primary = false) {
   const element = document.createElement("button");
@@ -39,11 +38,12 @@ function screen(phase, prompt, note = "") {
 }
 
 function render() {
-  current = selectQuestion(candidates, excluded);
+  const answered = history.flatMap(step => step.question ? [step.question] : []);
+  current = selectQuestion(candidates, answered);
   const ordered = [...candidates].sort((a, b) => b.weight - a.weight);
   const [top, runnerUp] = ordered;
   const total = candidates.reduce((sum, candidate) => sum + candidate.weight, 0);
-  const questionCount = history.filter(step => step.prompt).length;
+  const questionCount = answered.length;
   if (top && (top.weight / total >= .9 || (!current && top.weight > runnerUp?.weight))) {
     const { name } = top.pokemon;
     screen("予想", `${name} ですか？`);
@@ -76,8 +76,7 @@ function render() {
 }
 
 function respond(value) {
-  history.push({ candidates, prompt: current.prompt });
-  excluded.add(current.prompt);
+  history.push({ candidates, question: current });
   candidates = applyAnswer(candidates, current, value);
   render();
 }
@@ -85,14 +84,12 @@ function respond(value) {
 function start() {
   candidates = pokemon.map(entry => ({ pokemon: entry, weight: 1 }));
   history.length = 0;
-  excluded.clear();
   render();
 }
 
 ui.undo.addEventListener("click", () => {
   const previous = history.pop();
   candidates = previous.candidates;
-  if (previous.prompt) excluded.delete(previous.prompt);
   render();
 });
 ui.reset.addEventListener("click", start);

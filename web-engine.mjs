@@ -1,27 +1,28 @@
 const types = "ノーマル かくとう ひこう どく じめん いわ むし ゴースト はがね ほのお みず くさ でんき エスパー こおり ドラゴン あく フェアリー".split(" ");
 const colors = "黒 青 茶 灰 緑 ピンク 紫 赤 白 黄".split(" ");
-const question = (prompt, matches, weight = 1) => ({ prompt, matches, weight });
+const question = (family, prompt, matches, weight = 1) => ({ family, prompt, matches, weight });
+const familyLimit = 2;
 
 const questions = [
-  question("進化してこの姿になりますか？", p => p.evolved),
-  question("この姿からさらに進化しますか？", p => p.evolves),
-  question("進化前も進化先もいないポケモンですか？", p => !p.evolved && !p.evolves),
-  question("タイプは１つだけですか？", p => p.types.length === 1),
-  question("伝説または幻のポケモンですか？", p => p.rarity !== "一般"),
-  question("幻のポケモンですか？", p => p.rarity === "幻"),
-  ...types.map((name, index) => question(`${name}タイプを持っていますか？`,
+  question("evolution", "進化してこの姿になりますか？", p => p.evolved),
+  question("evolution", "この姿からさらに進化しますか？", p => p.evolves),
+  question("evolution", "進化前も進化先もいないポケモンですか？", p => !p.evolved && !p.evolves),
+  question("type", "タイプは１つだけですか？", p => p.types.length === 1),
+  question("rarity", "伝説または幻のポケモンですか？", p => p.rarity !== "一般"),
+  question("rarity", "幻のポケモンですか？", p => p.rarity === "幻"),
+  ...types.map((name, index) => question("type", `${name}タイプを持っていますか？`,
     p => p.types.includes(index + 1))),
-  ...colors.map((name, index) => question(`図鑑での体の色は「${name}」ですか？`,
+  ...colors.map((name, index) => question("color", `図鑑での体の色は「${name}」ですか？`,
     p => p.color === index + 1, .85)),
-  ...Array.from({ length: 9 }, (_, index) => question(
+  ...Array.from({ length: 9 }, (_, index) => question("generation",
     `第${index + 1}世代で初登場しましたか？`, p => p.generation === index + 1, .85)),
-  ...[5, 10, 20].map(height => question(`図鑑での高さは${height / 10}m以上ですか？`,
+  ...[5, 10, 20].map(height => question("height", `図鑑での高さは${height / 10}m以上ですか？`,
     p => p.height >= height, .6)),
-  ...[100, 500, 1000].map(weight => question(`図鑑での重さは${weight / 10}kg以上ですか？`,
+  ...[100, 500, 1000].map(weight => question("weight", `図鑑での重さは${weight / 10}kg以上ですか？`,
     p => p.weight >= weight, .5)),
 ];
 
-const primaryTypeQuestions = types.map((name, index) => question(`先に表示されるタイプは「${name}」ですか？`,
+const primaryTypeQuestions = types.map((name, index) => question("type", `先に表示されるタイプは「${name}」ですか？`,
     p => p.types[0] === index + 1, .45));
 
 const detailFields = [
@@ -36,38 +37,50 @@ function detailQuestions(candidates) {
     const values = new Set(candidates.map(({ pokemon }) => pokemon[field]));
     if (values.has(null) || values.has(undefined) || values.size < 2) continue;
     for (const value of values) {
-      predicates.push(question(prefix + format(value) + suffix, p => p[field] === value, priority));
+      predicates.push(question(field, prefix + format(value) + suffix, p => p[field] === value, priority));
     }
   }
   return predicates;
 }
 
-export function selectQuestion(candidates, excluded) {
+export function selectQuestion(candidates, answered) {
   if (candidates.length < 2) return null;
 
-  const total = candidates.reduce((sum, candidate) => sum + candidate.weight, 0);
-  const available = candidates.length <= 6
-    ? [...questions, ...detailQuestions(candidates)] : questions;
-  let best = null;
-  let bestScore = 0;
-  for (const entry of available) {
-    if (excluded.has(entry.prompt)) continue;
-    let yes = 0;
-    let no = 0;
-    for (const { pokemon, weight } of candidates) {
-      if (entry.matches(pokemon)) yes += weight;
-      else no += weight;
-    }
-    if (!yes || !no) continue;
-    const information = (yes / total) * Math.log2(total / yes) +
-      (no / total) * Math.log2(total / no);
-    const score = entry.weight * information;
-    if (score > bestScore) {
-      best = entry;
-      bestScore = score;
-    }
+  const counts = new Map();
+  const excluded = new Set();
+  for (const { family, prompt } of answered) {
+    counts.set(family, (counts.get(family) ?? 0) + 1);
+    excluded.add(prompt);
   }
-  return best;
+
+  const total = candidates.reduce((sum, candidate) => sum + candidate.weight, 0);
+  function bestQuestion(available) {
+    let best = null;
+    let bestScore = 0;
+    for (const entry of available) {
+      if (excluded.has(entry.prompt) || counts.get(entry.family) >= familyLimit) continue;
+      let yes = 0;
+      let no = 0;
+      for (const { pokemon, weight } of candidates) {
+        if (entry.matches(pokemon)) yes += weight;
+        else no += weight;
+      }
+      if (!yes || !no) continue;
+      const information = (yes / total) * Math.log2(total / yes) +
+        (no / total) * Math.log2(total / no);
+      const score = entry.weight * information;
+      if (score > bestScore) {
+        best = entry;
+        bestScore = score;
+      }
+    }
+    return best;
+  }
+
+  if (candidates.length <= 6) {
+    return bestQuestion([...questions, ...detailQuestions(candidates)]);
+  }
+  return bestQuestion(questions) ?? bestQuestion(detailQuestions(candidates));
 }
 
 export function applyAnswer(candidates, entry, answer) {
