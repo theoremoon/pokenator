@@ -1,0 +1,81 @@
+const types = "ノーマル かくとう ひこう どく じめん いわ むし ゴースト はがね ほのお みず くさ でんき エスパー こおり ドラゴン あく フェアリー".split(" ");
+const colors = "黒 青 茶 灰 緑 ピンク 紫 赤 白 黄".split(" ");
+const question = (prompt, matches, weight = 1) => ({ prompt, matches, weight });
+
+const questions = [
+  question("進化してこの姿になりますか？", p => p.evolved),
+  question("この姿からさらに進化しますか？", p => p.evolves),
+  question("進化前も進化先もいないポケモンですか？", p => !p.evolved && !p.evolves),
+  question("タイプは１つだけですか？", p => p.types.length === 1),
+  question("伝説または幻のポケモンですか？", p => p.rarity !== "一般"),
+  question("幻のポケモンですか？", p => p.rarity === "幻"),
+  ...types.map((name, index) => question(`${name}タイプを持っていますか？`,
+    p => p.types.includes(index + 1))),
+  ...colors.map((name, index) => question(`図鑑での体の色は「${name}」ですか？`,
+    p => p.color === index + 1, .85)),
+  ...Array.from({ length: 9 }, (_, index) => question(
+    `第${index + 1}世代で初登場しましたか？`, p => p.generation === index + 1, .85)),
+  ...[5, 10, 20].map(height => question(`図鑑での高さは${height / 10}m以上ですか？`,
+    p => p.height >= height, .6)),
+  ...[100, 500, 1000].map(weight => question(`図鑑での重さは${weight / 10}kg以上ですか？`,
+    p => p.weight >= weight, .5)),
+];
+
+const primaryTypeQuestions = types.map((name, index) => question(`先に表示されるタイプは「${name}」ですか？`,
+    p => p.types[0] === index + 1, .45));
+
+const detailFields = [
+  ["ability", "通常特性の１つ目は「", "」ですか？", .5, value => value],
+  ["height", "図鑑での高さはちょうど", "mですか？", .4, value => (value / 10).toFixed(1)],
+  ["weight", "図鑑での重さはちょうど", "kgですか？", .35, value => (value / 10).toFixed(1)],
+];
+
+function detailQuestions(candidates) {
+  const predicates = [...primaryTypeQuestions];
+  for (const [field, prefix, suffix, priority, format] of detailFields) {
+    const values = new Set(candidates.map(({ pokemon }) => pokemon[field]));
+    if (values.has(null) || values.has(undefined) || values.size < 2) continue;
+    for (const value of values) {
+      predicates.push(question(prefix + format(value) + suffix, p => p[field] === value, priority));
+    }
+  }
+  return predicates;
+}
+
+export function selectQuestion(candidates, excluded) {
+  if (candidates.length < 2) return null;
+
+  const total = candidates.reduce((sum, candidate) => sum + candidate.weight, 0);
+  const available = candidates.length <= 6
+    ? [...questions, ...detailQuestions(candidates)] : questions;
+  let best = null;
+  let bestScore = 0;
+  for (const entry of available) {
+    if (excluded.has(entry.prompt)) continue;
+    let yes = 0;
+    let no = 0;
+    for (const { pokemon, weight } of candidates) {
+      if (entry.matches(pokemon)) yes += weight;
+      else no += weight;
+    }
+    if (!yes || !no) continue;
+    const information = (yes / total) * Math.log2(total / yes) +
+      (no / total) * Math.log2(total / no);
+    const score = entry.weight * information;
+    if (score > bestScore) {
+      best = entry;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+export function applyAnswer(candidates, entry, answer) {
+  if (answer === 0) return candidates;
+  const matches = pokemon => entry.matches(pokemon) === (answer > 0);
+  if (Math.abs(answer) === 2) {
+    return candidates.filter(({ pokemon }) => matches(pokemon));
+  }
+  return candidates.map(candidate => matches(candidate.pokemon)
+    ? candidate : { ...candidate, weight: candidate.weight * 0.4 });
+}

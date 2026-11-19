@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ポケナター</title>
+  <link rel="stylesheet" href="web.css">
+  <script type="module" src="web.mjs"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <span class="mark" aria-hidden="true">?</span>
+      <h1>ポケナター</h1>
+      <button type="button" id="reset" class="quiet" hidden>最初から</button>
+    </header>
+    <section class="card" aria-labelledby="prompt">
+      <div class="status"><span id="phase"></span><span id="remaining"></span></div>
+      <h2 id="prompt" tabindex="-1">ポケモンを１匹、思い浮かべて。</h2>
+      <p id="note">全国図鑑に載っている、通常の姿を思い浮かべてください。</p>
+      <div id="choices" class="choices">
+        <button type="button" id="start" class="primary" disabled>読み込み中…</button>
+      </div>
+      <div class="controls">
+        <button type="button" id="undo" class="quiet" hidden>１問戻る</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
