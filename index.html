@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ポケナター</title>
-  <link rel="stylesheet" href="web.css">
-  <script type="module" src="web.mjs?v=3"></script>
+  <link rel="stylesheet" href="web.css?v=5">
+  <script type="module" src="web.mjs?v=5"></script>
 </head>
 <body>
   <main class="shell">
@@ -23,8 +23,23 @@
       </div>
       <div class="controls">
         <button type="button" id="undo" class="quiet" hidden>１問戻る</button>
+        <button type="button" id="report" class="quiet" hidden>結果を報告</button>
       </div>
     </section>
   </main>
+  <dialog id="report-dialog" aria-labelledby="report-title">
+    <h2 id="report-title">結果を報告</h2>
+    <label for="report-expected">思い浮かべていたポケモン</label>
+    <input id="report-expected" maxlength="80" autofocus>
+    <label for="report-body">報告内容</label>
+    <textarea id="report-body" rows="9" readonly></textarea>
+    <p>報告内容をコピーして、GitHub Issue に貼り付けてください。Issue は公開されます。</p>
+    <div class="controls">
+      <button type="button" id="report-copy">コピー</button>
+      <a href="https://github.com/theoremoon/pokenator/issues/new?title=%E6%8E%A8%E6%B8%AC%E7%B5%90%E6%9E%9C%E3%81%AE%E5%A0%B1%E5%91%8A" target="_blank" rel="noopener">GitHub Issue を開く</a>
+      <form method="dialog"><button>閉じる</button></form>
+    </div>
+    <p id="report-status" role="status" hidden></p>
+  </dialog>
 </body>
 </html>

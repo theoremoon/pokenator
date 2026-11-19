@@ -89,6 +89,29 @@ button.primary { color: #182015; background: var(--accent); border-color: transp
 button.primary:hover:not(:disabled) { background: #efffb8; }
 .quiet { color: var(--muted); background: transparent; border-color: transparent; }
 .controls { display: flex; justify-content: space-between; gap: .5rem; margin-top: .9rem; }
+#report { margin-left: auto; }
+#report-dialog {
+  width: min(100% - 2rem, 38rem);
+  padding: clamp(1rem, 4vw, 2rem);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: #1b2137;
+  color: inherit;
+}
+#report-dialog::backdrop { background: #080a14bb; }
+#report-dialog h2 { margin-top: 0; }
+#report-dialog label { display: block; margin: .85rem 0 .35rem; }
+#report-dialog input, #report-dialog textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: .5rem;
+  padding: .65rem;
+  font: inherit;
+}
+#report-dialog textarea { resize: vertical; }
+#report-dialog p { margin: .6rem 0 0; }
+#report-dialog .controls { flex-wrap: wrap; align-items: center; }
+#report-dialog a { color: var(--accent); }
 .choices:has(> :nth-child(5)) {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
